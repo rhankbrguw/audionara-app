@@ -61,3 +61,11 @@ class PlayerStateChanged extends PlayerEvent {
   @override
   List<Object?> get props => [state];
 }
+
+class PlayerToggleShuffle extends PlayerEvent {
+  const PlayerToggleShuffle();
+}
+
+class PlayerToggleRepeat extends PlayerEvent {
+  const PlayerToggleRepeat();
+}

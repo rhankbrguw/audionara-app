@@ -56,6 +56,10 @@ class AudioService {
     return await _player.getDuration();
   }
 
+  Future<void> setRepeatMode(bool isRepeat) async {
+    await _player.setReleaseMode(isRepeat ? ReleaseMode.loop : ReleaseMode.release);
+  }
+
   Future<void> seek(Duration position) async {
     await _player.seek(position);
   }

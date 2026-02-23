@@ -248,51 +248,6 @@ class _PlayerPageState extends State<PlayerPage> {
                                   );
                                 },
                               ),
-                              PopupMenuButton<String>(
-                                icon: const Icon(Icons.more_vert, color: AppColors.textSecondary, size: 32),
-                                color: AppColors.surface,
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    value: 'playlist',
-                                    child: Text('Add to Playlist', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: AppColors.textPrimary)),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'artist',
-                                    child: Text('View Artist', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: AppColors.textPrimary)),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'quality',
-                                    child: Text('Audio Quality (Current: 128kbps)', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: AppColors.textPrimary)),
-                                  ),
-                                ],
-                                onSelected: (value) {
-                                  if (value == 'playlist') {
-                                    final item = PlaylistItem()
-                                      ..trackId = track.id
-                                      ..title = track.title
-                                      ..artist = track.artist
-                                      ..coverArt = track.coverArt
-                                      ..streamUrl = track.streamUrl
-                                      ..addedAt = DateTime.now();
-
-                                    context.read<PlaylistBloc>().add(
-                                      ToggleFavoriteStatus(item: item),
-                                    );
-                                    
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Toggled in Playlist')),
-                                    );
-                                  } else if (value == 'quality') {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Audio quality options coming soon')),
-                                    );
-                                  } else if (value == 'artist') {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Artist route for ${track.artist} coming soon')),
-                                    );
-                                  }
-                                },
-                              ),
                             ],
                           );
                         },
@@ -376,21 +331,21 @@ class _PlayerPageState extends State<PlayerPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.shuffle, color: AppColors.textSecondary),
+                        icon: Icon(Icons.shuffle, color: state.isShuffleEnabled ? AppColors.primary : AppColors.textSecondary),
                         onPressed: () {
-                          // Toggle Shuffle Action
+                          context.read<PlayerBloc>().add(const PlayerToggleShuffle());
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.repeat, color: AppColors.textSecondary),
+                        icon: Icon(Icons.repeat, color: state.isRepeatEnabled ? AppColors.primary : AppColors.textSecondary),
                         onPressed: () {
-                          // Toggle Repeat Action
+                          context.read<PlayerBloc>().add(const PlayerToggleRepeat());
                         },
                       ),
                       IconButton(
                         icon: const Icon(Icons.settings, color: AppColors.textSecondary),
                         onPressed: () {
-                          // Open Settings Bottom Sheet or Dialog
+                          _showSettingsBottomSheet(context, track);
                         },
                       ),
                     ],
@@ -402,6 +357,66 @@ class _PlayerPageState extends State<PlayerPage> {
         );
         },
       ),
+    );
+  }
+
+  void _showSettingsBottomSheet(BuildContext context, dynamic track) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.playlist_add, color: AppColors.textPrimary),
+                title: Text('Add to Playlist', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
+                onTap: () {
+                  Navigator.pop(context);
+                  final item = PlaylistItem()
+                    ..trackId = track.id
+                    ..title = track.title
+                    ..artist = track.artist
+                    ..coverArt = track.coverArt
+                    ..streamUrl = track.streamUrl
+                    ..addedAt = DateTime.now();
+
+                  context.read<PlaylistBloc>().add(
+                    ToggleFavoriteStatus(item: item),
+                  );
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Toggled in Playlist')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.person, color: AppColors.textPrimary),
+                title: Text('View Artist', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Artist route for ${track.artist} coming soon')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.high_quality, color: AppColors.textPrimary),
+                title: Text('Audio Quality (Current: 128kbps)', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Audio quality options coming soon')),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

@@ -22,6 +22,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<PlayerPositionUpdated>(_onPositionUpdated);
     on<PlayerDurationUpdated>(_onDurationUpdated);
     on<PlayerStateChanged>(_onPlayerStateChanged);
+    on<PlayerToggleShuffle>(_onToggleShuffle);
+    on<PlayerToggleRepeat>(_onToggleRepeat);
 
     _positionSubscription = this.audioService.positionStream.listen((pos) {
       add(PlayerPositionUpdated(position: pos));
@@ -40,6 +42,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   StreamSubscription? _positionSubscription;
   StreamSubscription? _durationSubscription;
   StreamSubscription? _playerStateSubscription;
+
+  bool _isShuffleEnabled = false;
+  bool _isRepeatEnabled = false;
 
   @override
   Future<void> close() {
@@ -62,13 +67,17 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         emit(const PlayerError(message: 'No tracks found for this vibe.'));
         return;
       }
-      tracksList.shuffle();
+      if (_isShuffleEnabled) {
+        tracksList.shuffle();
+      }
       final track = tracksList.first;
       emit(PlayerPlaying(
         track: track,
         position: Duration.zero,
         duration: Duration.zero,
         currentVibe: event.vibe,
+        isShuffleEnabled: _isShuffleEnabled,
+        isRepeatEnabled: _isRepeatEnabled,
       ));
       
       // The audio engine will emit real durations to `_durationSubscription`
@@ -104,6 +113,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         duration: event.duration,
         currentVibe: current.currentVibe,
         isPlaying: current.isPlaying,
+        isShuffleEnabled: _isShuffleEnabled,
+        isRepeatEnabled: _isRepeatEnabled,
       ));
     }
   }
@@ -127,6 +138,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         duration: current.duration,
         currentVibe: current.currentVibe,
         isPlaying: isPlaying,
+        isShuffleEnabled: _isShuffleEnabled,
+        isRepeatEnabled: _isRepeatEnabled,
       ));
     }
   }
@@ -153,6 +166,41 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         duration: current.duration,
         currentVibe: current.currentVibe,
         isPlaying: current.isPlaying,
+        isShuffleEnabled: _isShuffleEnabled,
+        isRepeatEnabled: _isRepeatEnabled,
+      ));
+    }
+  }
+
+  void _onToggleShuffle(PlayerToggleShuffle event, Emitter<PlayerState> emit) {
+    _isShuffleEnabled = !_isShuffleEnabled;
+    if (state is PlayerPlaying) {
+      final current = state as PlayerPlaying;
+      emit(PlayerPlaying(
+        track: current.track,
+        position: current.position,
+        duration: current.duration,
+        currentVibe: current.currentVibe,
+        isPlaying: current.isPlaying,
+        isShuffleEnabled: _isShuffleEnabled,
+        isRepeatEnabled: _isRepeatEnabled,
+      ));
+    }
+  }
+
+  void _onToggleRepeat(PlayerToggleRepeat event, Emitter<PlayerState> emit) {
+    _isRepeatEnabled = !_isRepeatEnabled;
+    audioService.setRepeatMode(_isRepeatEnabled);
+    if (state is PlayerPlaying) {
+      final current = state as PlayerPlaying;
+      emit(PlayerPlaying(
+        track: current.track,
+        position: current.position,
+        duration: current.duration,
+        currentVibe: current.currentVibe,
+        isPlaying: current.isPlaying,
+        isShuffleEnabled: _isShuffleEnabled,
+        isRepeatEnabled: _isRepeatEnabled,
       ));
     }
   }

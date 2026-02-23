@@ -23,6 +23,8 @@ class PlayerPlaying extends PlayerState {
     required this.duration,
     required this.currentVibe,
     this.isPlaying = true,
+    this.isShuffleEnabled = false,
+    this.isRepeatEnabled = false,
   });
 
   final Track track;
@@ -30,9 +32,11 @@ class PlayerPlaying extends PlayerState {
   final Duration duration;
   final String currentVibe;
   final bool isPlaying;
+  final bool isShuffleEnabled;
+  final bool isRepeatEnabled;
 
   @override
-  List<Object?> get props => [track, position, duration, currentVibe, isPlaying];
+  List<Object?> get props => [track, position, duration, currentVibe, isPlaying, isShuffleEnabled, isRepeatEnabled];
 }
 
 // Error state carries the message as a value — widgets project it into UI,
