@@ -1,22 +1,24 @@
-// ApiTrackRepository bridges the domain contract to the AudioNara REST API.
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:isolate';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:http/http.dart' as http;
-
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/track_repository.dart';
 
 class ApiTrackRepository implements TrackRepository {
-  ApiTrackRepository({http.Client? client, String? baseUrl, SharedPreferences? prefs})
-      : _client = client ?? http.Client(),
+  ApiTrackRepository({
+    http.Client? client,
+    String? baseUrl,
+    SharedPreferences? prefs,
+  })  : _client = client ?? http.Client(),
         _prefs = prefs,
         _baseUrl = baseUrl ??
-            const String.fromEnvironment('API_BASE_URL',
-                defaultValue: 'http://10.0.2.2:8080') {
-    log('ApiTrackRepository initialized with baseUrl: $_baseUrl');
+            const String.fromEnvironment(
+              'API_BASE_URL',
+              defaultValue: 'http://10.0.2.2:8080',
+            ) {
+    log('ApiTrackRepository init: $_baseUrl');
   }
 
   final http.Client _client;
@@ -38,13 +40,12 @@ class ApiTrackRepository implements TrackRepository {
   Future<List<Track>> searchByVibe(String vibe) => _searchByVibe(vibe);
 
   Future<List<Track>> _searchByVibe(String vibe) async {
-    // We add a default limit matching the UI quality constraint to satisfy
-    // the Apple Music payload size and suppress the unused variable analyzer error.
     final requestedKbps = _prefs?.getInt('stream_quality') ?? 128;
     final limit = requestedKbps == 64 ? 20 : (requestedKbps == 256 ? 50 : 25);
-    
-    final response = await _client.get(Uri.parse(
-        '$_baseUrl/api/v1/tracks/search?term=${Uri.encodeComponent(vibe)}&limit=$limit&quality=$requestedKbps'))
+
+    final response = await _client
+        .get(Uri.parse(
+            '$_baseUrl/api/v1/tracks/search?term=${Uri.encodeComponent(vibe)}&limit=$limit&quality=$requestedKbps'))
         .timeout(const Duration(seconds: 10));
 
     if (response.statusCode != 200) {
@@ -52,24 +53,16 @@ class ApiTrackRepository implements TrackRepository {
       throw Exception(body['error'] ?? 'Unknown API error');
     }
 
-    // Extract primitive values before crossing the isolate boundary
     final filterExplicit = _prefs?.getBool('filter_explicit') ?? true;
     final responseBody = response.body;
 
-    // Offload JSON parsing and mapping to a background isolate
     return Isolate.run(() {
       final body = jsonDecode(responseBody) as Map<String, dynamic>;
       final data = body['data'] as List<dynamic>? ?? [];
 
       return data
           .cast<Map<String, dynamic>>()
-          .where((trackJson) {
-            // Drop track if it is marked as explicit and filter is enabled
-            if (filterExplicit && trackJson['trackExplicitness'] == 'explicit') {
-              return false;
-            }
-            return true;
-          })
+          .where((t) => !(filterExplicit && t['trackExplicitness'] == 'explicit'))
           .map(_trackFromJson)
           .toList(growable: false);
     });

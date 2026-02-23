@@ -34,7 +34,6 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
       final isSaved = await repository.isTrackSaved(event.trackId);
       emit(PlaylistTrackStatus(trackId: event.trackId, isSaved: isSaved));
     } catch (e) {
-      // Gracefully ignore or log db errors without crashing player
       emit(PlaylistTrackStatus(trackId: event.trackId, isSaved: false));
     }
   }
@@ -51,7 +50,6 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
         await repository.addTrack(event.item);
       }
       
-      // Emit the updated status dynamically
       emit(PlaylistTrackStatus(trackId: event.item.trackId, isSaved: !isSaved));
     } catch (e) {
       emit(PlaylistError(message: 'Failed to toggle favorite.'));

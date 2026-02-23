@@ -36,7 +36,7 @@ class HomePage extends StatelessWidget {
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
                 _buildSectionTitle(context, 'Recently Played'),
                 _buildRecentlyPlayed(context),
-                const SliverToBoxAdapter(child: SizedBox(height: 24 + 56)), // Padded for MiniPlayer
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
               ],
             ),
             Positioned(
@@ -88,102 +88,97 @@ class HomePage extends StatelessWidget {
         final durationMs = state.duration.inMilliseconds > 0 ? state.duration.inMilliseconds : 1;
         final progress = (positionMs / durationMs).clamp(0.0, 1.0);
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          height: 56, // Flat 56px height
-          decoration: BoxDecoration(
-            color: AppColors.surfaceVariant,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 4,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                context.push('/player', extra: state.currentVibe);
-              },
-              child: Stack(
-                children: [
-                  // Linear Progress bar at the top edge (1px thin)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 1,
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.transparent,
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+        return RepaintBoundary(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                  onTap: () => context.push('/player'),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 1,
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.transparent,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+                      ),
                     ),
-                  ),
-                  // Content padding
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        // Small Album Art
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            color: AppColors.surface,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              color: AppColors.surface,
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: track.coverArt.isNotEmpty
+                                ? Image.network(track.coverArt, fit: BoxFit.cover)
+                                : const Icon(Icons.music_note, size: 20, color: AppColors.textSecondary),
                           ),
-                          clipBehavior: Clip.antiAlias,
-                          child: track.coverArt.isNotEmpty
-                              ? Image.network(track.coverArt, fit: BoxFit.cover)
-                              : const Icon(Icons.music_note, size: 20, color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(width: 12),
-                        // Track Info (Title/Artist)
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                track.title,
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                track.artist,
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  track.title,
+                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  track.artist,
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        // Play/Pause Toggle
-                        IconButton(
-                          icon: Icon(
-                            state.isPlaying ? Icons.pause : Icons.play_arrow,
-                            color: AppColors.textPrimary,
+                          IconButton(
+                            icon: Icon(
+                              state.isPlaying ? Icons.pause : Icons.play_arrow,
+                              color: AppColors.textPrimary,
+                            ),
+                            onPressed: () {
+                              if (state.isPlaying) {
+                                context.read<PlayerBloc>().add(const PlayerPaused());
+                              } else {
+                                context.read<PlayerBloc>().add(const PlayerResumed());
+                              }
+                            },
                           ),
-                          onPressed: () {
-                            if (state.isPlaying) {
-                              context.read<PlayerBloc>().add(const PlayerPaused());
-                            } else {
-                              context.read<PlayerBloc>().add(const PlayerResumed());
-                            }
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -317,7 +312,6 @@ class HomePage extends StatelessWidget {
                 if (playerState is! PlayerPlaying || playerState.currentVibe != vibeName) {
                   context.read<PlayerBloc>().add(PlayerVibeRequested(vibe: vibeName));
                 }
-                // Navigate to player and push vibe
                 context.push('/player', extra: vibeName);
               },
               borderRadius: BorderRadius.circular(8),
@@ -362,7 +356,6 @@ class HomePage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: InkWell(
                 onTap: () {
-                  // Simple navigation; real implementation would pass track data
                   final playerState = context.read<PlayerBloc>().state;
                   if (playerState is! PlayerPlaying || playerState.currentVibe != 'chill') {
                     context.read<PlayerBloc>().add(const PlayerVibeRequested(vibe: 'chill'));

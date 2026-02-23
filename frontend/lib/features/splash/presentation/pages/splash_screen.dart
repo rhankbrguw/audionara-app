@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 
-// Navigation delay is a presentation concern; Future.delayed is intentional
-// here — no business logic gates the transition.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -15,7 +13,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // 2-Second immersive brand hold before moving to Dashboard
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) context.go('/home');
     });
@@ -39,8 +36,6 @@ class _SplashScreenState extends State<SplashScreen> {
             width: 160,
             height: 160,
             semanticLabel: 'AudioNara logo',
-            // Branded fallback prevents a crash if the asset is absent in CI
-            // or an unsigned debug build where assets haven't been bundled.
             errorBuilder: (context, error, stackTrace) => Container(
               width: 160,
               height: 160,

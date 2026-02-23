@@ -11,8 +11,6 @@ import '../../../playlist/presentation/bloc/playlist_event.dart';
 import '../../../playlist/presentation/bloc/playlist_state.dart';
 import '../../../playlist/domain/entities/playlist_item.dart';
 
-// PlayerPage reflects the BLoC state into the UI and handles side effects
-// (like SnakeBar errors) via BlocListener.
 class PlayerPage extends StatefulWidget {
   const PlayerPage({super.key});
 
@@ -21,11 +19,6 @@ class PlayerPage extends StatefulWidget {
 }
 
 class _PlayerPageState extends State<PlayerPage> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocListener<PlayerBloc, PlayerState>(
@@ -151,7 +144,6 @@ class _PlayerPageState extends State<PlayerPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Cover Art with 40% Max Height Constraint
                   ConstrainedBox(
                     constraints: BoxConstraints(
                       maxHeight: constraints.maxHeight * 0.4,
@@ -183,8 +175,6 @@ class _PlayerPageState extends State<PlayerPage> {
                     ),
                   ),
                   const SizedBox(height: 48),
-
-                  // Track Info (Typography enforced here by default theme)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -255,11 +245,8 @@ class _PlayerPageState extends State<PlayerPage> {
                     ],
                   ),
                   const SizedBox(height: 48),
-
-                  // Progress Slider Isolated Widget
                   _PlayerSlider(state: state),
 
-                  // Time Labels
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -279,20 +266,15 @@ class _PlayerPageState extends State<PlayerPage> {
                     ],
                   ),
                   const SizedBox(height: 24),
-
-                  // Row 2: Playback Controls (Previous, Play/Pause, Next)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
                         iconSize: 42,
                         icon: const Icon(Icons.skip_previous, color: AppColors.onBackground),
-                        onPressed: () {
-                          // Shuffle to a new track within the same vibe
-                          context.read<PlayerBloc>().add(
-                                PlayerVibeRequested(vibe: state.currentVibe),
-                              );
-                        },
+                        onPressed: () => context
+                            .read<PlayerBloc>()
+                            .add(PlayerVibeRequested(vibe: state.currentVibe)),
                       ),
                       const SizedBox(width: 24),
                       IconButton(
@@ -315,38 +297,27 @@ class _PlayerPageState extends State<PlayerPage> {
                       IconButton(
                         iconSize: 42,
                         icon: const Icon(Icons.skip_next, color: AppColors.onBackground),
-                        onPressed: () {
-                          // Shuffle to a new track within the same vibe
-                          context.read<PlayerBloc>().add(
-                                PlayerVibeRequested(vibe: state.currentVibe),
-                              );
-                        },
+                        onPressed: () => context
+                            .read<PlayerBloc>()
+                            .add(PlayerVibeRequested(vibe: state.currentVibe)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 32),
-
-                  // Row 3: ERP Controls (Shuffle, Repeat, Settings)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       IconButton(
                         icon: Icon(Icons.shuffle, color: state.isShuffleEnabled ? AppColors.primary : AppColors.textSecondary),
-                        onPressed: () {
-                          context.read<PlayerBloc>().add(const PlayerToggleShuffle());
-                        },
+                        onPressed: () => context.read<PlayerBloc>().add(const PlayerToggleShuffle()),
                       ),
                       IconButton(
                         icon: Icon(Icons.repeat, color: state.isRepeatEnabled ? AppColors.primary : AppColors.textSecondary),
-                        onPressed: () {
-                          context.read<PlayerBloc>().add(const PlayerToggleRepeat());
-                        },
+                        onPressed: () => context.read<PlayerBloc>().add(const PlayerToggleRepeat()),
                       ),
                       IconButton(
                         icon: const Icon(Icons.settings, color: AppColors.textSecondary),
-                        onPressed: () {
-                          _showSettingsBottomSheet(context, track);
-                        },
+                        onPressed: () => _showSettingsBottomSheet(context, track),
                       ),
                     ],
                   ),
@@ -453,11 +424,11 @@ class _PlayerSlider extends StatelessWidget {
         activeTrackColor: AppColors.accent,
         inactiveTrackColor: AppColors.surfaceVariant,
         thumbColor: AppColors.onBackground,
-        trackHeight: 2.0, // Minimalist 2px track
+        trackHeight: 2.0,
         trackShape: const _CustomTrackShape(),
         thumbShape:
             const RoundSliderThumbShape(enabledThumbRadius: 6.0, elevation: 0),
-        overlayShape: SliderComponentShape.noOverlay, // No visual ghost ring
+        overlayShape: SliderComponentShape.noOverlay,
       ),
       child: Slider(
         min: 0.0,

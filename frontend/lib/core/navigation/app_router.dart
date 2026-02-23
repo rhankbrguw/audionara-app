@@ -27,17 +27,7 @@ GoRouter buildAppRouter(SharedPreferences prefs) => GoRouter(
     GoRoute(
       path: '/player',
       name: 'player',
-      builder: (context, state) {
-        // Since PlayerBloc is global, we can optionally dispatch an initial vibe
-        // if one is provided via route extra, and if we aren't already playing one.
-        final initialVibe = state.extra as String?;
-        if (initialVibe != null) {
-          // Fire and forget - but only if we want to force playback on nav.
-          // Usually better to let the UI dispatch this when tapped, but we'll 
-          // leave it as-is if navigation explicitly passes a vibe.
-        }
-        return const PlayerPage();
-      },
+      builder: (context, state) => const PlayerPage(),
     ),
   ],
 );

@@ -8,7 +8,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   }
 
   void _onLoadUser(LoadUser event, Emitter<UserState> emit) {
-    // Scaffold default session until explicit Auth is built
     emit(const UserLoaded(username: 'Guest User'));
   }
 }

@@ -2,84 +2,63 @@ import 'dart:async';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 
-/// A singleton wrapper around the AudioPlayer instance.
-/// Exposes streams and playback controls for the BLoC to consume.
+/// Singleton audio engine wrapper.
+///
+/// Exposes typed streams and transport controls for the BLoC layer.
+/// All I/O exceptions are re-thrown with user-readable messages.
 class AudioService {
-  AudioService._privateConstructor() {
-    _initStreams();
+  AudioService._() {
+    _player.onPlayerComplete.listen((_) => _player.stop());
+    _player.onLog.listen((_) {});
   }
 
-  static final AudioService _instance = AudioService._privateConstructor();
-
-  factory AudioService() {
-    return _instance;
-  }
+  static final AudioService _instance = AudioService._();
+  factory AudioService() => _instance;
 
   final AudioPlayer _player = AudioPlayer();
   String? _currentUrl;
 
-  Stream<Duration> get positionStream => _player.onPositionChanged;
-  Stream<Duration> get durationStream => _player.onDurationChanged;
+  Stream<Duration>    get positionStream    => _player.onPositionChanged;
+  Stream<Duration>    get durationStream    => _player.onDurationChanged;
   Stream<PlayerState> get playerStateStream => _player.onPlayerStateChanged;
 
   Future<void> play(String url) async {
     _currentUrl = url;
     try {
-      if (_player.state == PlayerState.playing || _player.state == PlayerState.paused) {
+      if (_player.state == PlayerState.playing ||
+          _player.state == PlayerState.paused) {
         await _player.stop();
       }
       await _player.play(UrlSource(url));
     } on TimeoutException {
-      throw Exception('Network timeout: Could not connect to the stream.');
+      throw Exception('Network timeout: could not connect to stream.');
     } on SocketException {
-      throw Exception('Network error: Ensure you have an internet connection.');
+      throw Exception('Network error: check internet connection.');
     } catch (e) {
-      throw Exception('Failed to play stream: $e');
+      throw Exception('Playback failed: $e');
     }
   }
 
-  Future<void> pause() async {
-    await _player.pause();
-  }
+  Future<void> pause() => _player.pause();
 
   Future<void> resume() async {
-    if (_player.state == PlayerState.completed || _player.state == PlayerState.stopped) {
-      if (_currentUrl != null) {
-        await _player.play(UrlSource(_currentUrl!));
-        return;
-      }
+    final isIdle = _player.state == PlayerState.completed ||
+        _player.state == PlayerState.stopped;
+    if (isIdle && _currentUrl != null) {
+      await _player.play(UrlSource(_currentUrl!));
+      return;
     }
     await _player.resume();
   }
 
-  Future<Duration?> getDuration() async {
-    return await _player.getDuration();
-  }
+  Future<Duration?> getDuration() => _player.getDuration();
 
-  Future<void> setRepeatMode(bool isRepeat) async {
-    await _player.setReleaseMode(isRepeat ? ReleaseMode.loop : ReleaseMode.release);
-  }
+  Future<void> setRepeatMode(bool loop) =>
+      _player.setReleaseMode(loop ? ReleaseMode.loop : ReleaseMode.release);
 
-  Future<void> seek(Duration position) async {
-    await _player.seek(position);
-  }
+  Future<void> seek(Duration position) => _player.seek(position);
 
-  Future<void> stop() async {
-    await _player.stop();
-  }
+  Future<void> stop() => _player.stop();
 
-  Future<void> dispose() async {
-    await _player.dispose();
-  }
-
-  void _initStreams() {
-    _player.onPlayerComplete.listen((_) async {
-      // Force stop to trigger onPlayerStateChanged(PlayerState.stopped) for BLoC sync
-      await _player.stop();
-    });
-    
-    _player.onLog.listen((log) {
-      // In a real ERP setup, ship to remote logger here.
-    });
-  }
+  Future<void> dispose() => _player.dispose();
 }

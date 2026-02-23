@@ -7,8 +7,6 @@ import '../../domain/usecases/search_by_vibe_usecase.dart';
 import 'player_event.dart';
 import 'player_state.dart';
 
-// All playback state decisions are centralised here — widgets emit events
-// and render states; they contain zero conditional logic.
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   PlayerBloc({
     required this.searchByVibeUseCase,
@@ -25,36 +23,39 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<PlayerToggleShuffle>(_onToggleShuffle);
     on<PlayerToggleRepeat>(_onToggleRepeat);
 
-    _positionSubscription = this.audioService.positionStream.listen((pos) {
-      add(PlayerPositionUpdated(position: pos));
-    });
-    _durationSubscription = this.audioService.durationStream.listen((dur) {
-      add(PlayerDurationUpdated(duration: dur));
-    });
-    _playerStateSubscription = this.audioService.playerStateStream.listen((state) {
-      add(PlayerStateChanged(state: state));
-    });
+    _positionSubscription = this.audioService.positionStream.listen(
+      (pos) => add(PlayerPositionUpdated(position: pos)),
+    );
+    _durationSubscription = this.audioService.durationStream.listen(
+      (dur) => add(PlayerDurationUpdated(duration: dur)),
+    );
+    _playerStateSubscription = this.audioService.playerStateStream.listen(
+      (s) => add(PlayerStateChanged(state: s)),
+    );
   }
 
   final SearchByVibeUseCase searchByVibeUseCase;
   final AudioService audioService;
 
-  StreamSubscription? _positionSubscription;
-  StreamSubscription? _durationSubscription;
-  StreamSubscription? _playerStateSubscription;
+  late final StreamSubscription _positionSubscription;
+  late final StreamSubscription _durationSubscription;
+  late final StreamSubscription _playerStateSubscription;
 
   bool _isShuffleEnabled = false;
   bool _isRepeatEnabled = false;
 
+  static const _positionDebounceMs = 500;
+
   @override
-  Future<void> close() {
-    _positionSubscription?.cancel();
-    _durationSubscription?.cancel();
-    _playerStateSubscription?.cancel();
-    audioService.stop();
+  Future<void> close() async {
+    await Future.wait([
+      _positionSubscription.cancel(),
+      _durationSubscription.cancel(),
+      _playerStateSubscription.cancel(),
+    ]);
+    await audioService.stop();
     return super.close();
   }
-
 
   Future<void> _onVibeRequested(
     PlayerVibeRequested event,
@@ -62,15 +63,16 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   ) async {
     emit(const PlayerLoading());
     try {
-      final tracksList = List<Track>.from(await searchByVibeUseCase(event.vibe));
-      if (tracksList.isEmpty) {
+      final tracks = List<Track>.from(await searchByVibeUseCase(event.vibe))
+        ..shuffle();
+
+      if (tracks.isEmpty) {
         emit(const PlayerError(message: 'No tracks found for this vibe.'));
         return;
       }
-      if (_isShuffleEnabled) {
-        tracksList.shuffle();
-      }
-      final track = tracksList.first;
+
+      final track = tracks.first;
+
       emit(PlayerPlaying(
         track: track,
         position: Duration.zero,
@@ -79,129 +81,107 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         isShuffleEnabled: _isShuffleEnabled,
         isRepeatEnabled: _isRepeatEnabled,
       ));
-      
-      // The audio engine will emit real durations to `_durationSubscription`
-      // natively over the websocket as soon as the stream is fetched.
+
       await audioService.play(track.streamUrl);
     } catch (e) {
       emit(PlayerError(message: e.toString()));
     }
   }
 
-  // Audio engine owns pause/resume; BLoC reflects the resulting state only.
-  void _onPaused(PlayerPaused event, Emitter<PlayerState> emit) {
-    audioService.pause();
-  }
+  void _onPaused(PlayerPaused event, Emitter<PlayerState> emit) =>
+      audioService.pause();
 
-  void _onResumed(PlayerResumed event, Emitter<PlayerState> emit) {
-    audioService.resume();
-  }
+  void _onResumed(PlayerResumed event, Emitter<PlayerState> emit) =>
+      audioService.resume();
 
-  void _onSeeked(PlayerSeeked event, Emitter<PlayerState> emit) {
-    audioService.seek(event.position);
-  }
+  void _onSeeked(PlayerSeeked event, Emitter<PlayerState> emit) =>
+      audioService.seek(event.position);
 
   void _onDurationUpdated(
     PlayerDurationUpdated event,
     Emitter<PlayerState> emit,
   ) {
-    if (state is PlayerPlaying) {
-      final current = state as PlayerPlaying;
-      emit(PlayerPlaying(
-        track: current.track,
-        position: current.position,
-        duration: event.duration,
-        currentVibe: current.currentVibe,
-        isPlaying: current.isPlaying,
-        isShuffleEnabled: _isShuffleEnabled,
-        isRepeatEnabled: _isRepeatEnabled,
-      ));
-    }
+    if (state is! PlayerPlaying) return;
+    final current = state as PlayerPlaying;
+    emit(_withMeta(current, duration: event.duration));
   }
 
   void _onPlayerStateChanged(
     PlayerStateChanged event,
     Emitter<PlayerState> emit,
   ) {
-    if (state is PlayerPlaying) {
-      final current = state as PlayerPlaying;
-      final isPlaying = event.state == ap.PlayerState.playing;
-      
-      Duration newPosition = current.position;
-      if (event.state == ap.PlayerState.completed || event.state == ap.PlayerState.stopped) {
-        newPosition = Duration.zero;
-      }
+    if (state is! PlayerPlaying) return;
+    final current = state as PlayerPlaying;
 
-      emit(PlayerPlaying(
-        track: current.track,
-        position: newPosition,
-        duration: current.duration,
-        currentVibe: current.currentVibe,
-        isPlaying: isPlaying,
-        isShuffleEnabled: _isShuffleEnabled,
-        isRepeatEnabled: _isRepeatEnabled,
-      ));
-    }
+    final isPlaying = event.state == ap.PlayerState.playing;
+    final isTerminal = event.state == ap.PlayerState.completed ||
+        event.state == ap.PlayerState.stopped;
+
+    emit(_withMeta(
+      current,
+      position: isTerminal ? Duration.zero : current.position,
+      isPlaying: isPlaying,
+    ));
   }
-
 
   void _onPositionUpdated(
     PlayerPositionUpdated event,
     Emitter<PlayerState> emit,
   ) {
-    if (state is PlayerPlaying) {
-      final current = state as PlayerPlaying;
-      
-      if (current.duration.inMilliseconds == 0 && event.position.inMilliseconds > 200) {
-        audioService.getDuration().then((actualDuration) {
-          if (actualDuration != null && actualDuration.inMilliseconds > 0) {
-            add(PlayerDurationUpdated(duration: actualDuration));
-          }
-        });
-      }
+    if (state is! PlayerPlaying) return;
+    final current = state as PlayerPlaying;
 
-      emit(PlayerPlaying(
-        track: current.track,
-        position: event.position,
-        duration: current.duration,
-        currentVibe: current.currentVibe,
-        isPlaying: current.isPlaying,
-        isShuffleEnabled: _isShuffleEnabled,
-        isRepeatEnabled: _isRepeatEnabled,
-      ));
+    if (current.duration.inMilliseconds == 0 &&
+        event.position.inMilliseconds > 200) {
+      audioService.getDuration().then((d) {
+        if (d != null && d.inMilliseconds > 0) {
+          add(PlayerDurationUpdated(duration: d));
+        }
+      });
     }
+
+    final delta =
+        (event.position.inMilliseconds - current.position.inMilliseconds).abs();
+    if (delta < _positionDebounceMs) return;
+
+    emit(_withMeta(current, position: event.position));
   }
 
-  void _onToggleShuffle(PlayerToggleShuffle event, Emitter<PlayerState> emit) {
+  void _onToggleShuffle(
+    PlayerToggleShuffle event,
+    Emitter<PlayerState> emit,
+  ) {
     _isShuffleEnabled = !_isShuffleEnabled;
-    if (state is PlayerPlaying) {
-      final current = state as PlayerPlaying;
-      emit(PlayerPlaying(
-        track: current.track,
-        position: current.position,
-        duration: current.duration,
-        currentVibe: current.currentVibe,
-        isPlaying: current.isPlaying,
-        isShuffleEnabled: _isShuffleEnabled,
-        isRepeatEnabled: _isRepeatEnabled,
-      ));
-    }
+    _emitModeUpdate(emit);
   }
 
-  void _onToggleRepeat(PlayerToggleRepeat event, Emitter<PlayerState> emit) {
+  void _onToggleRepeat(
+    PlayerToggleRepeat event,
+    Emitter<PlayerState> emit,
+  ) {
     _isRepeatEnabled = !_isRepeatEnabled;
     audioService.setRepeatMode(_isRepeatEnabled);
-    if (state is PlayerPlaying) {
-      final current = state as PlayerPlaying;
-      emit(PlayerPlaying(
+    _emitModeUpdate(emit);
+  }
+
+  void _emitModeUpdate(Emitter<PlayerState> emit) {
+    if (state is! PlayerPlaying) return;
+    emit(_withMeta(state as PlayerPlaying));
+  }
+
+  PlayerPlaying _withMeta(
+    PlayerPlaying current, {
+    Duration? position,
+    Duration? duration,
+    bool? isPlaying,
+  }) =>
+      PlayerPlaying(
         track: current.track,
-        position: current.position,
-        duration: current.duration,
+        position: position ?? current.position,
+        duration: duration ?? current.duration,
         currentVibe: current.currentVibe,
-        isPlaying: current.isPlaying,
+        isPlaying: isPlaying ?? current.isPlaying,
         isShuffleEnabled: _isShuffleEnabled,
         isRepeatEnabled: _isRepeatEnabled,
-      ));
-    }
-  }
+      );
 }
