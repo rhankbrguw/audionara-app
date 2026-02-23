@@ -9,6 +9,16 @@ import '../../domain/repositories/track_repository.dart';
 /// MUST NOT be used outside of the DI wiring layer (app_router.dart or
 /// the DI module). Never import this into a widget or BLoC directly.
 class MockTrackRepository implements TrackRepository {
+  final List<Track> _mockCatalogue = [
+      Track(
+        id: '1',
+        title: 'Mock Track 1',
+        artist: 'AudioNara',
+        streamUrl: 'https://example.com/stream/1',
+        coverArt: 'https://example.com/cover/1.jpg',
+      ),
+  ];
+
   @override
   Future<Track> findById(String id) async {
     return Track(
@@ -21,15 +31,15 @@ class MockTrackRepository implements TrackRepository {
   }
 
   @override
+  Future<List<Track>> searchByVibe(String vibe) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return _mockCatalogue
+        .where((t) => t.title.toLowerCase().contains(vibe.toLowerCase()))
+        .toList();
+  }
+
+  @override
   Future<List<Track>> findAll() async {
-    return [
-      Track(
-        id: '1',
-        title: 'Mock Track 1',
-        artist: 'AudioNara',
-        streamUrl: 'https://example.com/stream/1',
-        coverArt: 'https://example.com/cover/1.jpg',
-      ),
-    ];
+    return _mockCatalogue;
   }
 }

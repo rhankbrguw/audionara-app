@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/track.dart';
 
-abstract class PlayerState extends Equatable {
+sealed class PlayerState extends Equatable {
   const PlayerState();
 
   @override
@@ -21,14 +21,18 @@ class PlayerPlaying extends PlayerState {
     required this.track,
     required this.position,
     required this.duration,
+    required this.currentVibe,
+    this.isPlaying = true,
   });
 
   final Track track;
   final Duration position;
   final Duration duration;
+  final String currentVibe;
+  final bool isPlaying;
 
   @override
-  List<Object?> get props => [track, position, duration];
+  List<Object?> get props => [track, position, duration, currentVibe, isPlaying];
 }
 
 // Error state carries the message as a value — widgets project it into UI,

@@ -34,18 +34,33 @@ dependencies:
   # Icons
   cupertino_icons: ^1.0.8
 
-  # State management
+  # State  # Configuration
+  shared_preferences: ^2.5.4
+
+  # UI / State
   flutter_bloc: ^8.1.6
   equatable: ^2.0.5
 
   # Typography
   google_fonts: ^6.2.1
 
-  # Assets
+  # Assets / UI
   flutter_svg: ^2.0.10+1
+  shimmer: ^3.0.0
 
   # Navigation
   go_router: ^14.6.1
+
+  # Local Persistence
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  path_provider: ^2.1.5
+
+  # Networking
+  http: ^1.2.2
+
+  # Audio playback
+  audioplayers: ^6.1.1
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +72,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  isar_generator: ^3.1.0+1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

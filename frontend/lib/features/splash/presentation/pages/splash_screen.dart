@@ -15,8 +15,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    // 2-Second immersive brand hold before moving to Dashboard
     Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) context.go('/player');
+      if (mounted) context.go('/home');
     });
   }
 

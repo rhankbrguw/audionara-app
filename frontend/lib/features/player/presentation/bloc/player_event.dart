@@ -7,13 +7,13 @@ abstract class PlayerEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class PlayerTrackLoaded extends PlayerEvent {
-  const PlayerTrackLoaded({required this.trackId});
+class PlayerVibeRequested extends PlayerEvent {
+  const PlayerVibeRequested({required this.vibe});
 
-  final String trackId;
+  final String vibe;
 
   @override
-  List<Object?> get props => [trackId];
+  List<Object?> get props => [vibe];
 }
 
 class PlayerPaused extends PlayerEvent {
@@ -42,4 +42,22 @@ class PlayerPositionUpdated extends PlayerEvent {
 
   @override
   List<Object?> get props => [position];
+}
+
+class PlayerDurationUpdated extends PlayerEvent {
+  const PlayerDurationUpdated({required this.duration});
+
+  final Duration duration;
+
+  @override
+  List<Object?> get props => [duration];
+}
+
+class PlayerStateChanged extends PlayerEvent {
+  const PlayerStateChanged({required this.state});
+
+  final dynamic state; // audioplayers PlayerState
+
+  @override
+  List<Object?> get props => [state];
 }

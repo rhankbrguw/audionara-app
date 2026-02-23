@@ -5,4 +5,5 @@ import '../entities/track.dart';
 abstract class TrackRepository {
   Future<Track> findById(String id);
   Future<List<Track>> findAll();
+  Future<List<Track>> searchByVibe(String vibe);
 }
