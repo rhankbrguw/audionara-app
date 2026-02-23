@@ -1,11 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/track.dart';
 
-// ---------------------------------------------------------------------------
-// States
-// ---------------------------------------------------------------------------
-
-/// Base class for all PlayerBloc states.
 abstract class PlayerState extends Equatable {
   const PlayerState();
 
@@ -13,17 +8,14 @@ abstract class PlayerState extends Equatable {
   List<Object?> get props => [];
 }
 
-/// The player has not been initialised yet.
 class PlayerInitial extends PlayerState {
   const PlayerInitial();
 }
 
-/// A track is being buffered / loaded.
 class PlayerLoading extends PlayerState {
   const PlayerLoading();
 }
 
-/// A track is currently playing.
 class PlayerPlaying extends PlayerState {
   const PlayerPlaying({
     required this.track,
@@ -39,7 +31,8 @@ class PlayerPlaying extends PlayerState {
   List<Object?> get props => [track, position, duration];
 }
 
-/// An unrecoverable error occurred during playback.
+// Error state carries the message as a value — widgets project it into UI,
+// no raw exception objects cross the BLoC boundary.
 class PlayerError extends PlayerState {
   const PlayerError({required this.message});
 

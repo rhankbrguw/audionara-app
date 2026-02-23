@@ -3,10 +3,8 @@ import '../../domain/usecases/get_track_usecase.dart';
 import 'player_event.dart';
 import 'player_state.dart';
 
-/// PlayerBloc orchestrates audio playback state.
-///
-/// All business decisions live here — widgets only dispatch events and
-/// render states. Zero logic permitted in UI layer.
+// All playback state decisions are centralised here — widgets emit events
+// and render states; they contain zero conditional logic.
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   PlayerBloc({required this.getTrackUseCase}) : super(const PlayerInitial()) {
     on<PlayerTrackLoaded>(_onTrackLoaded);
@@ -28,21 +26,17 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       emit(PlayerPlaying(
         track: track,
         position: Duration.zero,
-        duration: Duration.zero, // will be set once audio engine reports it
+        duration: Duration.zero,
       ));
     } catch (e) {
       emit(PlayerError(message: e.toString()));
     }
   }
 
-  void _onPaused(PlayerPaused event, Emitter<PlayerState> emit) {
-    // Pausing is handled by the audio service; BLoC reflects state only.
-    // Implementation hook — extend when audio engine is wired.
-  }
+  // Audio engine owns pause/resume; BLoC reflects the resulting state only.
+  void _onPaused(PlayerPaused event, Emitter<PlayerState> emit) {}
 
-  void _onResumed(PlayerResumed event, Emitter<PlayerState> emit) {
-    // Resuming is handled by the audio service; BLoC reflects state only.
-  }
+  void _onResumed(PlayerResumed event, Emitter<PlayerState> emit) {}
 
   void _onSeeked(PlayerSeeked event, Emitter<PlayerState> emit) {
     if (state is PlayerPlaying) {

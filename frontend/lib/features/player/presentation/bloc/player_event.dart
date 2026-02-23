@@ -1,10 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-// ---------------------------------------------------------------------------
-// Events
-// ---------------------------------------------------------------------------
-
-/// Base class for all PlayerBloc events.
 abstract class PlayerEvent extends Equatable {
   const PlayerEvent();
 
@@ -12,7 +7,6 @@ abstract class PlayerEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Request to load and start playing a track by ID.
 class PlayerTrackLoaded extends PlayerEvent {
   const PlayerTrackLoaded({required this.trackId});
 
@@ -22,17 +16,14 @@ class PlayerTrackLoaded extends PlayerEvent {
   List<Object?> get props => [trackId];
 }
 
-/// User paused the current track.
 class PlayerPaused extends PlayerEvent {
   const PlayerPaused();
 }
 
-/// User resumed the current track.
 class PlayerResumed extends PlayerEvent {
   const PlayerResumed();
 }
 
-/// User seeked to a new position.
 class PlayerSeeked extends PlayerEvent {
   const PlayerSeeked({required this.position});
 
@@ -42,7 +33,8 @@ class PlayerSeeked extends PlayerEvent {
   List<Object?> get props => [position];
 }
 
-/// Internal event: playback position updated (fired by audio engine).
+// Internal event — emitted by the audio engine, never by the UI layer.
+// Keeps position ticks inside the BLoC to decouple the audio engine lifecycle.
 class PlayerPositionUpdated extends PlayerEvent {
   const PlayerPositionUpdated({required this.position});
 

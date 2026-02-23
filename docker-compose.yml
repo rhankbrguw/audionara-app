@@ -5,16 +5,17 @@ services:
     image: postgres:16-alpine
     container_name: audionara_postgres
     restart: unless-stopped
+    env_file: ./backend/.env
     environment:
-      POSTGRES_DB: audionara
-      POSTGRES_USER: audionara_user
-      POSTGRES_PASSWORD: audionara_secret
+      POSTGRES_DB: ${DB_NAME:-audionara}
+      POSTGRES_USER: ${DB_USER:-audionara_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U audionara_user -d audionara"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-audionara_user} -d ${DB_NAME:-audionara}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,6 +35,24 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
+  backend:
+    image: golang:1.24-alpine
+    container_name: audionara_backend
+    working_dir: /app
+    # Hot reload via Air — source is bind-mounted so edits on the host
+    # are reflected inside the container without a rebuild.
+    command: sh -c "go install github.com/air-verse/air@v1.61.7 && air"
+    env_file: ./backend/.env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app:z # live source mount for Air hot-reload
+      - go_mod_cache:/root/go/pkg/mod
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   pgadmin_data:
+  go_mod_cache:

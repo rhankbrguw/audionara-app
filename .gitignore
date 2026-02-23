@@ -1,0 +1,47 @@
+# ─── Secrets & Environment ───────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── OS Artifacts ────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# ─── Temporary Directories ───────────────────────────────────────────────────
+tmp/
+temp/
+
+# ─── Go Backend ──────────────────────────────────────────────────────────────
+backend/bin/
+backend/tmp/          # air hot-reload temp files
+backend/audionara     # compiled binary (any name)
+backend/*.exe
+backend/*.test
+
+# ─── Flutter Frontend ────────────────────────────────────────────────────────
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/pubspec.lock   # uncomment to track lock (recommended for apps)
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/key.properties
+frontend/*.p8
+frontend/.idea/
+frontend/*.iml
+
+# ─── Editor Artifacts ────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~

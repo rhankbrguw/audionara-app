@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Central ThemeData for AudioNara.
-///
-/// Typography contract:
-///   - Headlines / Display → Satoshi (loaded via google_fonts asset bundle)
-///   - Body / Label / Caption → Inter
-///
-/// Usage: `MaterialApp(theme: AppTheme.light)`
+// Typography contract:
+//   Headlines / Display  → Plus Jakarta Sans  (indie-modern aesthetic)
+//   Body / Label         → Inter              (neutral, high-legibility)
+//
+// Consumed via Theme.of(context).textTheme — never instantiate fonts in widgets.
 abstract final class AppTheme {
   static ThemeData get light {
     const colorScheme = ColorScheme(
@@ -23,49 +21,45 @@ abstract final class AppTheme {
       onError: Colors.white,
     );
 
-    // Base inter text theme for body-level styles.
     final interBase = GoogleFonts.interTextTheme();
 
-    // Satoshi is served through google_fonts; use it for display/headline styles.
-    // If Satoshi is not in google_fonts catalogue, swap for Poppins or Nunito.
     final TextTheme textTheme = interBase.copyWith(
-      displayLarge: GoogleFonts.outfit(
+      displayLarge: GoogleFonts.plusJakartaSans(
         fontSize: 57,
         fontWeight: FontWeight.w700,
         color: AppColors.onBackground,
         letterSpacing: -0.25,
       ),
-      displayMedium: GoogleFonts.outfit(
+      displayMedium: GoogleFonts.plusJakartaSans(
         fontSize: 45,
         fontWeight: FontWeight.w700,
         color: AppColors.onBackground,
       ),
-      displaySmall: GoogleFonts.outfit(
+      displaySmall: GoogleFonts.plusJakartaSans(
         fontSize: 36,
         fontWeight: FontWeight.w600,
         color: AppColors.onBackground,
       ),
-      headlineLarge: GoogleFonts.outfit(
+      headlineLarge: GoogleFonts.plusJakartaSans(
         fontSize: 32,
         fontWeight: FontWeight.w600,
         color: AppColors.onBackground,
       ),
-      headlineMedium: GoogleFonts.outfit(
+      headlineMedium: GoogleFonts.plusJakartaSans(
         fontSize: 28,
         fontWeight: FontWeight.w600,
         color: AppColors.onBackground,
       ),
-      headlineSmall: GoogleFonts.outfit(
+      headlineSmall: GoogleFonts.plusJakartaSans(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: AppColors.onBackground,
       ),
-      titleLarge: GoogleFonts.outfit(
+      titleLarge: GoogleFonts.plusJakartaSans(
         fontSize: 22,
         fontWeight: FontWeight.w500,
         color: AppColors.onBackground,
       ),
-      // Body & labels backed by Inter (from interBase, just re-colored).
       bodyLarge: GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.w400,
